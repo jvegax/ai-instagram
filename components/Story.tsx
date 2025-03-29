@@ -1,19 +1,40 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Plus } from 'lucide-react-native';
 import Colors from '@/constants/colors';
+import { useRouter } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 
 interface StoryProps {
+  id: string;
   username: string;
   image: string;
   hasStory?: boolean;
   isUser?: boolean;
 }
 
-export default function Story({ username, image, hasStory = false, isUser = false }: StoryProps) {
+export default function Story({ id, username, image, hasStory = false, isUser = false }: StoryProps) {
+  const router = useRouter();
+
+  const handleStoryPress = () => {
+    if (hasStory) {
+      if (Platform.OS !== 'web') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
+      router.push(`/stories?userId=${id}`);
+    } else if (isUser) {
+      // Handle user's own story creation
+      if (Platform.OS !== 'web') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
+      // In a real app, this would open the camera/story creation
+      console.log('Create a story');
+    }
+  };
+
   return (
-    <TouchableOpacity style={styles.container}>
+    <TouchableOpacity style={styles.container} onPress={handleStoryPress}>
       <View style={styles.imageContainer}>
         {hasStory ? (
           <LinearGradient

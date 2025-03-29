@@ -1,7 +1,11 @@
-import React from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, Image, StyleSheet, TouchableOpacity, Dimensions, TouchableWithoutFeedback, Platform } from 'react-native';
 import { Heart, MessageCircle, Send, Bookmark, MoreHorizontal } from 'lucide-react-native';
 import Colors from '@/constants/colors';
+import HeartAnimation from './HeartAnimation';
+import { useLikeStore } from '@/store/likeStore';
+import CommentsModal from './CommentsModal';
+import * as Haptics from 'expo-haptics';
 
 interface PostProps {
   post: {
@@ -23,6 +27,51 @@ interface PostProps {
 const { width } = Dimensions.get('window');
 
 export default function Post({ post }: PostProps) {
+  const [showHeartAnimation, setShowHeartAnimation] = useState(false);
+  const [lastTap, setLastTap] = useState(0);
+  const [showComments, setShowComments] = useState(false);
+  const { isPostLiked, toggleLike, likePost } = useLikeStore();
+  const isLiked = isPostLiked(post.id);
+
+  const handleDoubleTap = () => {
+    const now = Date.now();
+    const DOUBLE_TAP_DELAY = 300;
+    
+    if (now - lastTap < DOUBLE_TAP_DELAY) {
+      // Double tap detected
+      if (!isLiked) {
+        likePost(post.id);
+        setShowHeartAnimation(true);
+        if (Platform.OS !== 'web') {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        }
+      }
+    }
+    
+    setLastTap(now);
+  };
+
+  const handleLikePress = () => {
+    const newLikedState = toggleLike(post.id);
+    if (newLikedState) {
+      setShowHeartAnimation(true);
+      if (Platform.OS !== 'web') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
+    }
+  };
+
+  const handleAnimationComplete = () => {
+    setShowHeartAnimation(false);
+  };
+
+  const handleCommentsPress = () => {
+    setShowComments(true);
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -38,19 +87,29 @@ export default function Post({ post }: PostProps) {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.postImageContainer}>
-        <Image source={{ uri: post.image }} style={styles.postImage} />
-        <View style={styles.overlay}>
-          <Text style={styles.overlayText}>ganaba</Text>
+      <TouchableWithoutFeedback onPress={handleDoubleTap}>
+        <View style={styles.postImageContainer}>
+          <Image source={{ uri: post.image }} style={styles.postImage} />
+          <HeartAnimation 
+            visible={showHeartAnimation} 
+            onAnimationComplete={handleAnimationComplete} 
+          />
+          <View style={styles.overlay}>
+            <Text style={styles.overlayText}>ganaba</Text>
+          </View>
         </View>
-      </View>
+      </TouchableWithoutFeedback>
 
       <View style={styles.actions}>
         <View style={styles.leftActions}>
-          <TouchableOpacity style={styles.actionButton}>
-            <Heart size={24} color={Colors.text} />
+          <TouchableOpacity style={styles.actionButton} onPress={handleLikePress}>
+            <Heart 
+              size={24} 
+              color={isLiked ? Colors.red : Colors.text} 
+              fill={isLiked ? Colors.red : 'transparent'} 
+            />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity style={styles.actionButton} onPress={handleCommentsPress}>
             <MessageCircle size={24} color={Colors.text} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.actionButton}>
@@ -63,16 +122,24 @@ export default function Post({ post }: PostProps) {
       </View>
 
       <View style={styles.footer}>
-        <Text style={styles.likes}>{post.likes.toLocaleString()} likes</Text>
+        <Text style={styles.likes}>
+          {(isLiked ? post.likes + 1 : post.likes).toLocaleString()} likes
+        </Text>
         <View style={styles.captionContainer}>
           <Text style={styles.captionUsername}>{post.user.username}</Text>
           <Text style={styles.captionText}> {post.description}</Text>
         </View>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={handleCommentsPress}>
           <Text style={styles.comments}>View all {post.comments} comments</Text>
         </TouchableOpacity>
         <Text style={styles.timestamp}>{post.timestamp}</Text>
       </View>
+
+      <CommentsModal 
+        visible={showComments} 
+        onClose={() => setShowComments(false)} 
+        postId={post.id}
+      />
     </View>
   );
 }

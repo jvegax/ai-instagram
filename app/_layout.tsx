@@ -5,6 +5,7 @@ import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import { Platform } from "react-native";
 import { ErrorBoundary } from "./error-boundary";
+import { LinearGradient } from 'expo-linear-gradient';
 
 export const unstable_settings = {
   initialRouteName: "(tabs)",
@@ -46,6 +47,8 @@ function RootLayoutNav() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="messages" options={{ headerShown: false, presentation: 'card' }} />
+      <Stack.Screen name="stories" options={{ headerShown: false, presentation: 'transparentModal' }} />
     </Stack>
   );
 }

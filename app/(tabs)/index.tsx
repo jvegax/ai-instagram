@@ -1,13 +1,16 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, StatusBar } from 'react-native';
 import { ChevronDown, Heart, Send } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 import Colors from '@/constants/colors';
 import Story from '@/components/Story';
 import Post from '@/components/Post';
-import { stories } from '@/mocks/stories';
 import { posts } from '@/mocks/posts';
+import { userStories } from '@/mocks/userStories';
 
 export default function HomeScreen() {
+  const router = useRouter();
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
@@ -20,7 +23,10 @@ export default function HomeScreen() {
           <TouchableOpacity style={styles.iconButton}>
             <Heart size={24} color={Colors.text} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.iconButton}>
+          <TouchableOpacity 
+            style={styles.iconButton}
+            onPress={() => router.push('/messages')}
+          >
             <View style={styles.notificationBadge}>
               <Text style={styles.notificationText}>4</Text>
             </View>
@@ -35,13 +41,23 @@ export default function HomeScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.storiesContainer}
         >
-          {stories.map((story) => (
+          {/* User's own story */}
+          <Story 
+            id="current-user"
+            username="Tu historia"
+            image="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=774&q=80"
+            hasStory={false}
+            isUser={true}
+          />
+          
+          {/* Other users' stories */}
+          {userStories.map((user) => (
             <Story 
-              key={story.id}
-              username={story.username}
-              image={story.image}
-              hasStory={story.hasStory}
-              isUser={story.isUser}
+              key={user.userId}
+              id={user.userId}
+              username={user.username}
+              image={user.profileImage}
+              hasStory={true}
             />
           ))}
         </ScrollView>
